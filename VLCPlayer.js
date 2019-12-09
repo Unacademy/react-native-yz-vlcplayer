@@ -39,7 +39,7 @@ export default class VLCPlayer extends Component {
     }
 
     seek(pos) {
-        this.setNativeProps({ seek: pos });
+        this.setNativeProps({ seekTime: pos });
     }
 
     autoAspectRatio(isAuto){
@@ -77,6 +77,9 @@ export default class VLCPlayer extends Component {
             console.log(type,event.nativeEvent);
         }
         switch (type){
+            case 'onLoad':
+                this.props.onLoad && this.props.onLoad(event.nativeEvent);
+                break;
             case 'Opening':
                 this.props.onOpen && this.props.onOpen(event.nativeEvent);
                 this.props.onIsPlaying && this.props.onIsPlaying(event.nativeEvent);
@@ -89,7 +92,7 @@ export default class VLCPlayer extends Component {
                 this.props.onPaused && this.props.onPaused(event.nativeEvent);
                 this.props.onIsPlaying && this.props.onIsPlaying(event.nativeEvent);
                 break;
-            case 'Stoped':
+            case 'Stopped':
                 this.props.onStopped && this.props.onStopped(event.nativeEvent);
                 this.props.onIsPlaying && this.props.onIsPlaying(event.nativeEvent);
                 break;
@@ -169,6 +172,7 @@ export default class VLCPlayer extends Component {
         }
         source.initOptions = this.props.initOptions || [];
         source.isNetwork = isNetwork;
+        source.isAsset = isAsset;
         source.autoplay = this.props.autoplay;
         if(!isNaN(this.props.hwDecoderEnabled) && !isNaN(this.props.hwDecoderForced)){
             source.hwDecoderEnabled = this.props.hwDecoderEnabled;
@@ -190,8 +194,7 @@ export default class VLCPlayer extends Component {
             onVideoProgress: this._onProgress,
             onVideoStateChange: this._onVideoStateChange,
             onSnapshot: this._onSnapshot,
-            onIsPlaying: this._onIsPlaying,
-            progressUpdateInterval: 250,
+            onIsPlaying: this._onIsPlaying
         });
 
         return <RCTVLCPlayer ref={this._assignRoot} {...nativeProps} />;
@@ -202,12 +205,14 @@ VLCPlayer.propTypes = {
     /* Native only */
     rate: PropTypes.number,
     seek: PropTypes.number,
+    seekTime: PropTypes.number,
     resume: PropTypes.bool,
     position: PropTypes.number,
     snapshotPath: PropTypes.string,
     paused: PropTypes.bool,
     autoAspectRatio: PropTypes.bool,
     videoAspectRatio: PropTypes.string,
+    progressUpdateInterval: PropTypes.number,
     /**
      * 0 --- 200
      */
@@ -226,6 +231,7 @@ VLCPlayer.propTypes = {
     onSnapshot: PropTypes.func,
     onIsPlaying: PropTypes.func,
     onOpen: PropTypes.func,
+    onLoad:PropTypes.func,
     onLoadStart:PropTypes.func,
 
 

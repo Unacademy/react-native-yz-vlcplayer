@@ -24,7 +24,9 @@ static NSString *const playbackRate = @"rate";
     NSDictionary * _source;
     BOOL _paused;
     BOOL _started;
-    
+    BOOL _loaded;
+    float _progressUpdateInterval;
+    id _timeObserver;
     
 }
 
@@ -32,6 +34,8 @@ static NSString *const playbackRate = @"rate";
 {
     if ((self = [super init])) {
         _eventDispatcher = eventDispatcher;
+        _loaded = false;
+        _progressUpdateInterval = 250;
         
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationWillResignActive:)
@@ -104,6 +108,7 @@ static NSString *const playbackRate = @"rate";
         NSInteger initType = [RCTConvert NSInteger:[_source objectForKey:@"initType"]];
         BOOL autoplay = [RCTConvert BOOL:[_source objectForKey:@"autoplay"]];
         BOOL isNetWork   = [RCTConvert BOOL:[_source objectForKey:@"isNetwork"]];
+        BOOL isAsset   = [RCTConvert BOOL:[_source objectForKey:@"isAsset"]];
         NSURL* _uri    = [NSURL URLWithString:uri];
         if(uri && uri.length > 0){
             //init player && play
@@ -115,10 +120,10 @@ static NSString *const playbackRate = @"rate";
             [_player setDrawable:self];
             _player.delegate = self;
             _player.scaleFactor = 0;
-            //设置缓存多少毫秒
+            //Set how many milliseconds to cache
             // [mediaDictonary setObject:@"1500" forKey:@"network-caching"];
             VLCMedia *media = nil;
-            if(isNetWork){
+            if(isNetWork || isAsset){
                 media = [VLCMedia mediaWithURL:_uri];
             }else{
                 media = [VLCMedia mediaWithPath: uri];
@@ -160,6 +165,7 @@ static NSString *const playbackRate = @"rate";
         NSInteger initType = [RCTConvert NSInteger:[source objectForKey:@"initType"]];
         BOOL autoplay = [RCTConvert BOOL:[source objectForKey:@"autoplay"]];
         BOOL isNetWork   = [RCTConvert BOOL:[source objectForKey:@"isNetwork"]];
+        BOOL isAsset   = [RCTConvert BOOL:[source objectForKey:@"isAsset"]];
         NSURL* _uri    = [NSURL URLWithString:uri];
         if(uri && uri.length > 0){
             //init player && play
@@ -171,16 +177,20 @@ static NSString *const playbackRate = @"rate";
             [_player setDrawable:self];
             _player.delegate = self;
             _player.scaleFactor = 0;
-            //设置缓存多少毫秒
+            //Set how many milliseconds to cache
             // [mediaDictonary setObject:@"1500" forKey:@"network-caching"];
+//            [mediaOptions setObject:@20 forKey:@"dshow-fps"];
+            //[mediaOptions setObject:<#(nonnull id)#> forKey:VLCMediaTracksInformationBitrate]
             VLCMedia *media = nil;
-            if(isNetWork){
+            if(isNetWork || isAsset){
                 media = [VLCMedia mediaWithURL:_uri];
             }else{
                 media = [VLCMedia mediaWithPath: uri];
             }
             if(media){
                 media.delegate = self;
+//                [mediaOptions setObject:@20.0 forKey:VLCMediaTracksInformationFrameRate];
+                
                 if(mediaOptions){
                     [media addOptions:mediaOptions];
                 }
@@ -240,6 +250,9 @@ static NSString *const playbackRate = @"rate";
 
 - (void)mediaPlayerTimeChanged:(NSNotification *)aNotification
 {
+    if (!_loaded) {
+        [self sendOnLoadEvent];
+    }
     [self updateVideoProgress];
 }
 
@@ -306,7 +319,7 @@ static NSString *const playbackRate = @"rate";
                                               @"target": self.reactTag,
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
-                                              @"type": @"Stoped",
+                                              @"type": @"Stopped",
                                               @"videoWidth":[NSNumber numberWithInt:width],
                                               @"videoHeight":[NSNumber numberWithInt:height],
                                               @"willPlay":[NSNumber numberWithBool:willPlay],
@@ -316,7 +329,7 @@ static NSString *const playbackRate = @"rate";
                     self.onVideoStateChange(@{
                                               @"target": self.reactTag,
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
-                                              @"duration":[NSNumber numberWithInt:[_player.media.length intValue]],
+                                              @"duration": [self getDuration:_player.media.length],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
                                               @"type": @"Buffering",
                                               @"videoWidth":[NSNumber numberWithInt:width],
@@ -329,7 +342,7 @@ static NSString *const playbackRate = @"rate";
                     self.onVideoStateChange(@{
                                               @"target": self.reactTag,
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
-                                              @"duration":[NSNumber numberWithInt:[_player.media.length intValue]],
+                                              @"duration": [self getDuration:_player.media.length],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
                                               @"type": @"Playing",
@@ -341,7 +354,7 @@ static NSString *const playbackRate = @"rate";
                 case VLCMediaPlayerStateESAdded:
                     self.onVideoStateChange(@{
                                               @"target": self.reactTag,
-                                              @"duration":[NSNumber numberWithInt:[_player.media.length intValue]],
+                                              @"duration": [self getDuration:_player.media.length],
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
                                               @"type": @"ESAdded",
@@ -351,16 +364,12 @@ static NSString *const playbackRate = @"rate";
                                               });
                     break;
                 case VLCMediaPlayerStateEnded:
-                    NSLog(@"VLCMediaPlayerStateEnded %i",1);
-                    int currentTime   = [[_player time] intValue];
-                    int remainingTime = [[_player remainingTime] intValue];
-                    int duration      = [_player.media.length intValue];
                     self.onVideoStateChange(@{
                                               @"target": self.reactTag,
                                               @"type": @"Ended",
-                                              @"currentTime": [NSNumber numberWithInt:currentTime],
-                                              @"remainingTime": [NSNumber numberWithInt:remainingTime],
-                                              @"duration":[NSNumber numberWithInt:duration],
+                                              @"currentTime": [self getDuration:[_player time]],
+                                              @"remainingTime": [self getDuration:[_player remainingTime]],
+                                              @"duration":[self getDuration:_player.media.length],
                                               @"position":[NSNumber numberWithFloat:_player.position],
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
@@ -372,7 +381,7 @@ static NSString *const playbackRate = @"rate";
                 case VLCMediaPlayerStateError:
                     self.onVideoStateChange(@{
                                               @"target": self.reactTag,
-                                              @"duration":[NSNumber numberWithInt:[_player.media.length intValue]],
+                                              @"duration": [self getDuration:_player.media.length],
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
                                               @"type": @"Error",
@@ -385,7 +394,7 @@ static NSString *const playbackRate = @"rate";
                 default:
                     self.onVideoStateChange(@{
                                               @"target": self.reactTag,
-                                              @"duration":[NSNumber numberWithInt:[_player.media.length intValue]],
+                                              @"duration": [self getDuration:_player.media.length],
                                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
                                               @"hasVideoOut": [NSNumber numberWithBool: hasVideoOut],
                                               @"type": [NSString stringWithCString:state encoding:(NSASCIIStringEncoding)],
@@ -401,19 +410,61 @@ static NSString *const playbackRate = @"rate";
     }
 }
 
+-(NSNumber *)getDuration:(VLCTime *)length
+{
+    float videoFloatLength = [[length value] floatValue] / 1000.0f;
+    return [NSNumber numberWithFloat:videoFloatLength];
+}
+
+-(void)sendOnLoadEvent
+{
+    @try{
+        if(_player){
+            if(!_loaded) {
+                _loaded = true;
+                self.onVideoStateChange(@{
+                                       @"target": self.reactTag,
+                                       @"type": @"onLoad",
+                                       @"currentTime": [self getDuration:[_player time]],
+                                       @"remainingTime": [self getDuration:[_player remainingTime]],
+                                       @"duration":[self getDuration:_player.media.length],
+                                       @"position":[NSNumber numberWithFloat:_player.position],
+                                       @"isPlaying": [NSNumber numberWithBool: _player.isPlaying],
+                                       });
+                [self addPlayerTimeObserver];
+            }
+        }
+    }
+    @catch(NSException *exception){
+        NSLog(@"%@", exception);
+    }
+}
+
+-(void)addPlayerTimeObserver
+{
+//    _timeObserver = [NSTimer scheduledTimerWithTimeInterval:(_progressUpdateInterval / 1000) target:self selector:@selector(updateVideoProgress) userInfo:nil repeats:true];
+}
+
+-(void)removePlayerTimeObserver
+{
+    if (_timeObserver) {
+        [_timeObserver invalidate];
+        _timeObserver = nil;
+    }
+}
+
 -(void)updateVideoProgress
 {   @try{
         if(_player){
             int currentTime   = [[_player time] intValue];
-            int remainingTime = [[_player remainingTime] intValue];
             int duration      = [_player.media.length intValue];
 
             if( currentTime >= 0 && currentTime < duration) {
                 self.onVideoProgress(@{
                                        @"target": self.reactTag,
-                                       @"currentTime": [NSNumber numberWithInt:currentTime],
-                                       @"remainingTime": [NSNumber numberWithInt:remainingTime],
-                                       @"duration":[NSNumber numberWithInt:duration],
+                                       @"currentTime": [self getDuration:[_player time]],
+                                       @"remainingTime": [self getDuration:[_player remainingTime]],
+                                       @"duration":[self getDuration:_player.media.length],
                                        @"position":[NSNumber numberWithFloat:_player.position],
                                        @"isPlaying": [NSNumber numberWithBool: _player.isPlaying],
                                        });
@@ -489,10 +540,26 @@ static NSString *const playbackRate = @"rate";
     }
 }
 
--(void)setSeekTime:(int)time{
-    if(_player){
-         VLCTime *time = [VLCTime timeWithInt:(time)];
+-(void)setSeekTime:(float)seekTime{
+    if(_player != nil && [_player isSeekable]){
+        // Convert seekTime in ms before changing in VLCTime
+        VLCTime *time = [VLCTime timeWithNumber:[NSNumber numberWithFloat:(seekTime * 1000)]];
         [_player setTime:time];
+        if (!_timeObserver) {
+            [self addPlayerTimeObserver];
+        }
+        [self setPaused:_paused];
+        [self updateVideoProgress];
+    }
+}
+
+-(void)setProgressUpdateInterval:(float)progressUpdateInterval
+{
+    _progressUpdateInterval = progressUpdateInterval;
+    
+    if (_timeObserver) {
+        [self removePlayerTimeObserver];
+        [self addPlayerTimeObserver];
     }
 }
 
@@ -527,6 +594,7 @@ static NSString *const playbackRate = @"rate";
         _player = nil;
         _eventDispatcher = nil;
     }
+    [self removePlayerTimeObserver];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 

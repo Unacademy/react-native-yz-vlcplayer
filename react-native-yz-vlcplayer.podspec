@@ -19,7 +19,9 @@ Pod::Spec.new do |s|
   s.libraries           = 'iconv.2', 'c++.1', 'z.1', 'bz2.1.0'
   s.framework           = 'AudioToolbox','VideoToolbox', 'CoreMedia', 'CoreVideo', 'CoreAudio', 'AVFoundation', 'MediaPlayer'
 
+  s.static_framework = true
+  
   s.dependency          'React'
-  s.dependency          'MobileVLCKit','~> 3.3.8'
+  s.dependency          'MobileVLCKit'
 
 end

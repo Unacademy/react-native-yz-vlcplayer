@@ -18,7 +18,6 @@
 @property (nonatomic, copy) RCTBubblingEventBlock onVideoStateChange;
 
 
-
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
 
 @end
