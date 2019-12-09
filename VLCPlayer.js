@@ -157,6 +157,11 @@ export default class VLCPlayer extends Component {
         if (uri && uri.match(/^\//)) {
             isNetwork = false;
         }
+        // mediaOptions={mediaOptions ||
+        //     {
+        //       ':network-caching': 250,
+        //       ':live-caching': 250,
+        //     }
         if(Platform.OS === 'ios'){
             source.mediaOptions = this.props.mediaOptions || {};
         }else{
