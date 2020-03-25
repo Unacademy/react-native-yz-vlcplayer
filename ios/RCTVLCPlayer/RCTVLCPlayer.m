@@ -26,6 +26,7 @@ static NSString *const playbackRate = @"rate";
     BOOL _started;
     BOOL _loaded;
     float _progressUpdateInterval;
+    float _progressAddonTime;
     id _timeObserver;
     
 }
@@ -35,7 +36,6 @@ static NSString *const playbackRate = @"rate";
     if ((self = [super init])) {
         _eventDispatcher = eventDispatcher;
         _loaded = false;
-        _progressUpdateInterval = 250;
         
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationWillResignActive:)
@@ -80,6 +80,7 @@ static NSString *const playbackRate = @"rate";
             [_player pause];
             _paused =  YES;
             _started = NO;
+            [self removePlayerTimeObserver];
         }
     }
 }
@@ -133,8 +134,8 @@ static NSString *const playbackRate = @"rate";
                 [media addOptions:mediaOptions];
             }
             /*if(videoRatio){
-                _player.videoAspectRatio = videoRatio;
-            }*/
+             _player.videoAspectRatio = videoRatio;
+             }*/
             [media parseWithOptions:VLCMediaParseLocal|VLCMediaFetchLocal|VLCMediaParseNetwork|VLCMediaFetchNetwork];
             _player.media = media;
             if(autoplay)
@@ -179,7 +180,7 @@ static NSString *const playbackRate = @"rate";
             _player.scaleFactor = 0;
             //Set how many milliseconds to cache
             // [mediaDictonary setObject:@"1500" forKey:@"network-caching"];
-//            [mediaOptions setObject:@20 forKey:@"dshow-fps"];
+            //            [mediaOptions setObject:@20 forKey:@"dshow-fps"];
             //[mediaOptions setObject:<#(nonnull id)#> forKey:VLCMediaTracksInformationBitrate]
             VLCMedia *media = nil;
             if(isNetWork || isAsset){
@@ -189,34 +190,34 @@ static NSString *const playbackRate = @"rate";
             }
             if(media){
                 media.delegate = self;
-//                [mediaOptions setObject:@20.0 forKey:VLCMediaTracksInformationFrameRate];
+                //                [mediaOptions setObject:@20.0 forKey:VLCMediaTracksInformationFrameRate];
                 
                 if(mediaOptions){
                     [media addOptions:mediaOptions];
                 }
                 [media parseWithOptions:VLCMediaParseLocal|VLCMediaFetchLocal|VLCMediaParseNetwork|VLCMediaFetchNetwork];
-                 _player.media = media;
+                _player.media = media;
             }
             if(autoplay)
                 [self play];
             if(self.onVideoLoadStart){
                 self.onVideoLoadStart(@{
-                                       @"target": self.reactTag
-                                       });
+                                        @"target": self.reactTag
+                                        });
             }
         }
     }
     @catch(NSException *exception){
-          NSLog(@"%@", exception);
+        NSLog(@"%@", exception);
     }
 }
 
 - (void)mediaPlayerSnapshot:(NSNotification *)aNotification{
-     NSLog(@"userInfo %@",[aNotification userInfo]);
+    NSLog(@"userInfo %@",[aNotification userInfo]);
     self.onSnapshot(@{
                       @"target": self.reactTag,
                       @"success": [NSNumber numberWithInt:1],
-                    });
+                      });
 }
 
 
@@ -253,37 +254,40 @@ static NSString *const playbackRate = @"rate";
     if (!_loaded) {
         [self sendOnLoadEvent];
     }
-    [self updateVideoProgress];
+    [self updateVideoProgress:0];
+    
+    [self removePlayerTimeObserver];
+    [self addPlayerTimeObserver];
 }
 
 - (void)mediaPlayerStateChanged:(NSNotification *)aNotification
 {
     @try{
         if(_player){
-
+            
             BOOL isPlaying = _player.isPlaying;
             BOOL hasVideoOut = _player.hasVideoOut;
             /*NSInteger numberOfReadBytesOnInput = _player.media.numberOfReadBytesOnInput;
-            NSInteger numberOfPlayedAudioBuffers =  _player.media.numberOfPlayedAudioBuffers;
-            NSInteger numberOfSentBytes = _player.media.numberOfSentBytes;
-            NSInteger numberOfReadBytesOnDemux =  _player.media.numberOfReadBytesOnDemux;
-            NSInteger numberOfSentPackets =  _player.media.numberOfSentPackets;
-            NSInteger numberOfCorruptedDataPackets =  _player.media.numberOfCorruptedDataPackets;
-            NSInteger numberOfDisplayedPictures =  _player.media.numberOfDisplayedPictures;
-            NSInteger numberOfDecodedVideoBlocks =  _player.media.numberOfDecodedVideoBlocks;
-          */
+             NSInteger numberOfPlayedAudioBuffers =  _player.media.numberOfPlayedAudioBuffers;
+             NSInteger numberOfSentBytes = _player.media.numberOfSentBytes;
+             NSInteger numberOfReadBytesOnDemux =  _player.media.numberOfReadBytesOnDemux;
+             NSInteger numberOfSentPackets =  _player.media.numberOfSentPackets;
+             NSInteger numberOfCorruptedDataPackets =  _player.media.numberOfCorruptedDataPackets;
+             NSInteger numberOfDisplayedPictures =  _player.media.numberOfDisplayedPictures;
+             NSInteger numberOfDecodedVideoBlocks =  _player.media.numberOfDecodedVideoBlocks;
+             */
             /*self.onIsPlaying(@{
-                               @"target": self.reactTag,
-                               @"isPlaying": [NSNumber numberWithBool: isPlaying],
-                               @"numberOfReadBytesOnInput":[NSNumber numberWithInteger:numberOfReadBytesOnInput],
-                               @"numberOfPlayedAudioBuffers":[NSNumber numberWithInteger:numberOfPlayedAudioBuffers],
-                               @"numberOfSentBytes":[NSNumber numberWithInteger:numberOfSentBytes],
-                               @"numberOfReadBytesOnDemux":[NSNumber numberWithInteger:numberOfReadBytesOnDemux],
-                               @"numberOfSentPackets":[NSNumber numberWithInteger:numberOfSentPackets],
-                               @"numberOfCorruptedDataPackets":[NSNumber numberWithInteger:numberOfCorruptedDataPackets],
-                               @"numberOfDisplayedPictures":[NSNumber numberWithInteger:numberOfDisplayedPictures],
-                               @"numberOfDecodedVideoBlocks":[NSNumber numberWithInteger:numberOfDecodedVideoBlocks],
-                               });
+             @"target": self.reactTag,
+             @"isPlaying": [NSNumber numberWithBool: isPlaying],
+             @"numberOfReadBytesOnInput":[NSNumber numberWithInteger:numberOfReadBytesOnInput],
+             @"numberOfPlayedAudioBuffers":[NSNumber numberWithInteger:numberOfPlayedAudioBuffers],
+             @"numberOfSentBytes":[NSNumber numberWithInteger:numberOfSentBytes],
+             @"numberOfReadBytesOnDemux":[NSNumber numberWithInteger:numberOfReadBytesOnDemux],
+             @"numberOfSentPackets":[NSNumber numberWithInteger:numberOfSentPackets],
+             @"numberOfCorruptedDataPackets":[NSNumber numberWithInteger:numberOfCorruptedDataPackets],
+             @"numberOfDisplayedPictures":[NSNumber numberWithInteger:numberOfDisplayedPictures],
+             @"numberOfDecodedVideoBlocks":[NSNumber numberWithInteger:numberOfDecodedVideoBlocks],
+             });
              */
             VLCMediaPlayerState state = _player.state;
             CGSize videoSize =  _player.videoSize;
@@ -423,15 +427,14 @@ static NSString *const playbackRate = @"rate";
             if(!_loaded) {
                 _loaded = true;
                 self.onVideoStateChange(@{
-                                       @"target": self.reactTag,
-                                       @"type": @"onLoad",
-                                       @"currentTime": [self getDuration:[_player time]],
-                                       @"remainingTime": [self getDuration:[_player remainingTime]],
-                                       @"duration":[self getDuration:_player.media.length],
-                                       @"position":[NSNumber numberWithFloat:_player.position],
-                                       @"isPlaying": [NSNumber numberWithBool: _player.isPlaying],
-                                       });
-                [self addPlayerTimeObserver];
+                                          @"target": self.reactTag,
+                                          @"type": @"onLoad",
+                                          @"currentTime": [self getDuration:[_player time]],
+                                          @"remainingTime": [self getDuration:[_player remainingTime]],
+                                          @"duration":[self getDuration:_player.media.length],
+                                          @"position":[NSNumber numberWithFloat:_player.position],
+                                          @"isPlaying": [NSNumber numberWithBool: _player.isPlaying],
+                                          });
             }
         }
     }
@@ -442,7 +445,8 @@ static NSString *const playbackRate = @"rate";
 
 -(void)addPlayerTimeObserver
 {
-//    _timeObserver = [NSTimer scheduledTimerWithTimeInterval:(_progressUpdateInterval / 1000) target:self selector:@selector(updateVideoProgress) userInfo:nil repeats:true];
+    _progressAddonTime = 0;
+    _timeObserver = [NSTimer scheduledTimerWithTimeInterval:(_progressUpdateInterval / 1000) target:self selector:@selector(handleAddonTimeUpdate) userInfo:nil repeats:true];
 }
 
 -(void)removePlayerTimeObserver
@@ -453,24 +457,30 @@ static NSString *const playbackRate = @"rate";
     }
 }
 
--(void)updateVideoProgress
-{   @try{
-        if(_player){
-            int currentTime   = [[_player time] intValue];
-            int duration      = [_player.media.length intValue];
+-(void)handleAddonTimeUpdate {
+    _progressAddonTime += _progressUpdateInterval;
+    [self updateVideoProgress:_progressAddonTime];
+}
 
-            if( currentTime >= 0 && currentTime < duration) {
-                self.onVideoProgress(@{
-                                       @"target": self.reactTag,
-                                       @"currentTime": [self getDuration:[_player time]],
-                                       @"remainingTime": [self getDuration:[_player remainingTime]],
-                                       @"duration":[self getDuration:_player.media.length],
-                                       @"position":[NSNumber numberWithFloat:_player.position],
-                                       @"isPlaying": [NSNumber numberWithBool: _player.isPlaying],
-                                       });
-            }
+-(void)updateVideoProgress: (float)addOnTime
+{   @try{
+    if(_player){
+        int currentTime   = [[_player time] intValue];
+        int duration      = [_player.media.length intValue];
+        VLCTime *currentTimeWithAddOn = [VLCTime timeWithInt:(currentTime + (int)addOnTime)] ;
+        
+        if( currentTime >= 0 && currentTime < duration) {
+            self.onVideoProgress(@{
+                                   @"target": self.reactTag,
+                                   @"currentTime": [self getDuration: currentTimeWithAddOn],
+                                   @"remainingTime": [self getDuration:[_player remainingTime]],
+                                   @"duration":[self getDuration:_player.media.length],
+                                   @"position":[NSNumber numberWithFloat:_player.position],
+                                   @"isPlaying": [NSNumber numberWithBool: _player.isPlaying],
+                                   });
         }
     }
+}
     @catch(NSException *exception){
         NSLog(@"%@", exception);
     }
@@ -512,7 +522,7 @@ static NSString *const playbackRate = @"rate";
 -(void)setVolumeDown:(int)volume
 {
     if(_player){
-
+        
         VLCAudio *audio = _player.audio;
         [audio volumeDown];
     }
@@ -545,22 +555,15 @@ static NSString *const playbackRate = @"rate";
         // Convert seekTime in ms before changing in VLCTime
         VLCTime *time = [VLCTime timeWithNumber:[NSNumber numberWithFloat:(seekTime * 1000)]];
         [_player setTime:time];
-        if (!_timeObserver) {
-            [self addPlayerTimeObserver];
-        }
+        
         [self setPaused:_paused];
-        [self updateVideoProgress];
+        [self updateVideoProgress: 0];
     }
 }
 
 -(void)setProgressUpdateInterval:(float)progressUpdateInterval
 {
     _progressUpdateInterval = progressUpdateInterval;
-    
-    if (_timeObserver) {
-        [self removePlayerTimeObserver];
-        [self addPlayerTimeObserver];
-    }
 }
 
 -(void)setSnapshotPath:(NSString*)path
@@ -599,7 +602,7 @@ static NSString *const playbackRate = @"rate";
 }
 
 - (void)dealloc{
-     [self _release];
+    [self _release];
 }
 #pragma mark - Lifecycle
 
