@@ -150,7 +150,7 @@ export default class VLCPlayerView extends Component {
           //onEnded={this.onEnded.bind(this)}
           onStopped={this.onEnded.bind(this)}
           onPlaying={this.onPlaying.bind(this)}
-          onBuffering={this.onBuffering.bind(this)}
+          onBuffer={this.onBuffering.bind(this)}
           onPaused={this.onPaused.bind(this)}
           progressUpdateInterval={250}
           onError={this._onError}

@@ -171,7 +171,7 @@ this.vlcPlayer.snapshot(path)  // path: string  The path to the stored file.
    | autoplay    | bool     |       |  Whether to play automatically (default false) |
    | onLoadStart | func     |       |  VLC video container initialization completed  |
    | onOpen      | func     |       |  Video is turned on        |
-   | onBuffering | func     |       |  Buffering in progress     |
+   | onBuffer    | func     |       |  Buffering in progress     |
    | onProgress  | func     | { currentTime:1000,duration:1000 }  unit：ms    |  Video Progress changes     |
    | onEnd       | func     |       |  Video playback ends        |
    | onPlaying   | func     |       |  Video is playing           |
@@ -234,7 +234,7 @@ this.vlcPlayer.snapshot(path)  // path: string  The path to the stored file.
  ```
                                                              支持平台
            onEnd            Video playback ends                  ios       android
-           onBuffering      Buffering in progress                    ios       android
+           onBuffer         Buffering in progress                    ios       android
            onError          Error playing video
            onPlaying        Video playback                      ios       android
            onPaused         Video Pause                      ios       android
@@ -290,7 +290,7 @@ this.vlcPlayer.snapshot(path)  // path: string  The path to the stored file.
            /**
             * is in the cache
             */
-           onBuffering={this.onBuffering.bind(this)}
+           onBuffer={this.onBuffering.bind(this)}
            /**
             * Error playing video
             */

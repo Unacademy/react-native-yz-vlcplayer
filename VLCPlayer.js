@@ -101,7 +101,7 @@ export default class VLCPlayer extends Component {
                 this.props.onIsPlaying && this.props.onIsPlaying(event.nativeEvent);
                 break;
             case 'Buffering':
-                this.props.onBuffering && this.props.onBuffering(event.nativeEvent);
+                this.props.onBuffer && this.props.onBuffer(event.nativeEvent);
                 this.props.onIsPlaying && this.props.onIsPlaying(event.nativeEvent);
                 break;
             case 'onLoadStart':
