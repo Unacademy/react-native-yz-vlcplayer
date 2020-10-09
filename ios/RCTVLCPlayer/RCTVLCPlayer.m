@@ -28,6 +28,7 @@ static NSString *const playbackRate = @"rate";
     float _progressUpdateInterval;
     float _progressAddonTime;
     id _timeObserver;
+    float _playBackRate;
     
 }
 
@@ -159,6 +160,7 @@ static NSString *const playbackRate = @"rate";
             [_player stop];
             _player = nil;
         }
+        _loaded = false;
         _source = source;
         NSMutableDictionary* mediaOptions = [source objectForKey:@"mediaOptions"];
         NSArray* options = [source objectForKey:@"initOptions"];
@@ -178,6 +180,9 @@ static NSString *const playbackRate = @"rate";
             [_player setDrawable:self];
             _player.delegate = self;
             _player.scaleFactor = 0;
+            if(_playBackRate) {
+                [self setRate:_playBackRate];
+            }
             //Set how many milliseconds to cache
             // [mediaDictonary setObject:@"1500" forKey:@"network-caching"];
             //            [mediaOptions setObject:@20 forKey:@"dshow-fps"];
@@ -574,6 +579,7 @@ static NSString *const playbackRate = @"rate";
 
 -(void)setRate:(float)rate
 {
+    _playBackRate = rate;
     [_player setRate:rate];
 }
 
