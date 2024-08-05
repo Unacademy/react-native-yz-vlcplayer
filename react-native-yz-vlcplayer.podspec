@@ -16,8 +16,8 @@ Pod::Spec.new do |s|
 
   s.preserve_paths      = 'ios/**/*'
   s.source_files        = 'ios/**/*.{h,m}'
-  s.libraries           = 'iconv.2', 'c++.1', 'z.1', 'bz2.1.0'
-  s.framework           = 'AudioToolbox','VideoToolbox', 'CoreMedia', 'CoreVideo', 'CoreAudio', 'AVFoundation', 'MediaPlayer'
+  # s.libraries           = 'bz2', 'iconv'
+  # s.framework           = 'AudioToolbox','AVFoundation', 'CFNetwork', 'CoreFoundation', 'CoreGraphics', 'CoreMedia', 'CoreText', 'CoreVideo', 'Foundation', 'OpenGLES', 'QuartzCore', 'Security', 'VideoToolbox', 'UIKit'
 
   s.static_framework = true
   

@@ -352,12 +352,7 @@ export default class VLCPlayerView extends Component {
                 onLoadStart={this._onLoadStart}
                 onSnapshot={this._onSnapshot}
                 onIsPlaying={this._onIsPlaying}
-                mediaOptions={mediaOptions ||
-                {
-                  ':network-caching': 250,
-                  ':live-caching': 250,
-                }
-                }
+                mediaOptions={mediaOptions}
                 initOptions={initOptions || []}
                 initType={initType || 1}
               />

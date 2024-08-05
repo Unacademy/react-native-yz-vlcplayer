@@ -12,6 +12,7 @@ import {
   Text,
   Dimensions,
   BackHandler,
+  SafeAreaView,
 } from 'react-native';
 
 import VLCPlayerView from './VLCPlayerView';
@@ -211,7 +212,7 @@ export default class CommonVideo extends Component {
       showTop = true;
     }
     return (
-      <View
+      <SafeAreaView
         //onLayout={this._onLayout}
         style={[isFull ? styles.container : { height: 200, backgroundColor: '#000' }, style]}>
         {showTop && <View style={styles.topView}>
@@ -280,7 +281,7 @@ export default class CommonVideo extends Component {
             }}
           />
         )}
-      </View>
+      </SafeAreaView>
     );
   }
 }

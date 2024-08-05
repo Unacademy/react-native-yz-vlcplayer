@@ -27,10 +27,6 @@ import org.videolan.libvlc.IVLCVout;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
-import org.videolan.vlc.RecordEvent;
-import org.videolan.vlc.util.LogUtils;
-import org.videolan.vlc.util.VLCInstance;
-import org.videolan.vlc.util.VLCOptions;
 import java.util.ArrayList;
 
 @SuppressLint("ViewConstructor")
@@ -327,7 +323,7 @@ class ReactVlcPlayerView extends TextureView implements
             return;
         }
         try {
-            ArrayList<String> cOptions = VLCOptions.getLibOptions(getContext());
+            final ArrayList<String> cOptions = new ArrayList<>();
             String uriString = srcMap.hasKey("uri") ? srcMap.getString("uri") : null;
             //String extension = srcMap.hasKey("type") ? srcMap.getString("type") : null;
             boolean isNetwork = srcMap.hasKey("isNetwork") ? srcMap.getBoolean("isNetwork") : false;
@@ -337,6 +333,7 @@ class ReactVlcPlayerView extends TextureView implements
             ReadableArray initOptions = srcMap.hasKey("initOptions") ? srcMap.getArray("initOptions") : null;
             Integer hwDecoderEnabled = srcMap.hasKey("hwDecoderEnabled") ? srcMap.getInt("hwDecoderEnabled") : null;
             Integer hwDecoderForced = srcMap.hasKey("hwDecoderForced") ? srcMap.getInt("hwDecoderForced") : null;
+
             if(initOptions != null){
                 ArrayList options = initOptions.toArrayList();
                 for(int i=0; i < options.size() - 1 ; i++){
@@ -346,11 +343,10 @@ class ReactVlcPlayerView extends TextureView implements
             }
             // Create LibVLC
             if(initType == 1){
-                libvlc =  VLCInstance.get(getContext());
+                libvlc = new LibVLC(getContext());
             }else{
-                libvlc =  new LibVLC(getContext(), cOptions);
+                libvlc = new LibVLC(getContext(), cOptions);
             }
-            //libvlc = new LibVLC(getContext(), options);
             // Create media player
             mMediaPlayer = new MediaPlayer(libvlc);
             mMediaPlayer.setEventListener(mPlayerListener);
@@ -531,15 +527,7 @@ class ReactVlcPlayerView extends TextureView implements
      * @param path
      */
     public void doSnapshot(String path){
-        if(mMediaPlayer != null){
-            int result = new RecordEvent().takeSnapshot(mMediaPlayer,path,0,0);
-            if(result == 0){
-                eventEmitter.onSnapshot(1);
-            }else{
-                eventEmitter.onSnapshot(0);
-            }
-        }
-
+       return;
     }
 
 

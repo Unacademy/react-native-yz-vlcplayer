@@ -34,19 +34,19 @@ RCT_EXPORT_VIEW_PROPERTY(videoAspectRatio, NSString);
 RCT_EXPORT_VIEW_PROPERTY(snapshotPath, NSString);
 RCT_EXPORT_VIEW_PROPERTY(progressUpdateInterval, float);
 /* Should support: onLoadStart, onLoad, and onError to stay consistent with Image */
-/*RCT_EXPORT_VIEW_PROPERTY(onVideoPaused, RCTBubblingEventBlock);
- RCT_EXPORT_VIEW_PROPERTY(onVideoStopped, RCTBubblingEventBlock);
- RCT_EXPORT_VIEW_PROPERTY(onVideoBuffering, RCTBubblingEventBlock);
- RCT_EXPORT_VIEW_PROPERTY(onVideoPlaying, RCTBubblingEventBlock);
- RCT_EXPORT_VIEW_PROPERTY(onVideoEnded, RCTBubblingEventBlock);
- RCT_EXPORT_VIEW_PROPERTY(onVideoError, RCTBubblingEventBlock);
- RCT_EXPORT_VIEW_PROPERTY(onVideoOpen, RCTBubblingEventBlock);
+/*RCT_EXPORT_VIEW_PROPERTY(onVideoPaused, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onVideoStopped, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onVideoBuffering, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onVideoPlaying, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onVideoEnded, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onVideoError, RCTDirectEventBlock);
+ RCT_EXPORT_VIEW_PROPERTY(onVideoOpen, RCTDirectEventBlock);
  */
-RCT_EXPORT_VIEW_PROPERTY(onVideoLoadStart, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onSnapshot, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onIsPlaying, RCTBubblingEventBlock);
-RCT_EXPORT_VIEW_PROPERTY(onVideoStateChange, RCTBubblingEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoLoadStart, RCTDirectEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTDirectEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onSnapshot, RCTDirectEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onIsPlaying, RCTDirectEventBlock);
+RCT_EXPORT_VIEW_PROPERTY(onVideoStateChange, RCTDirectEventBlock);
 
 
 + (BOOL)requiresMainQueueSetup
