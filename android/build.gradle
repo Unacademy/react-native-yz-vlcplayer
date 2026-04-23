@@ -1,5 +1,9 @@
 apply plugin: 'com.android.library'
 
+repositories {
+    google()
+    mavenCentral()
+}
 
 def _ext = rootProject.ext;
 
@@ -19,8 +23,8 @@ android {
         versionCode 1
         versionName "1.0"
         ndk {
-            //支持的abi    可选 精简的库
-            abiFilters 'armeabi-v7a'//,'x86_64','arm64-v8a','x86'
+            // 16 KB page-size devices (and Play 64-bit requirements) need arm64-v8a; keep 32-bit for older devices.
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
     buildTypes {
@@ -34,5 +38,6 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "com.facebook.react:react-native:${_reactNativeVersion}"
-    implementation 'com.yyl.vlc:vlc-android-sdk:3.0.13'
+    // 3.6.3+ ships native .so built for 16 KB page size (see Vlc-sdk-lib README); pulls libvlc-all transitively.
+    implementation 'io.github.mengzhidaren:vlc-android-sdk:3.6.3'
 }
